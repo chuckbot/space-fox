@@ -1,9 +1,18 @@
 import React, { Suspense, useRef } from "react";
-import { Canvas, useFrame, useLoader } from "@react-three/fiber";
+import {
+  Canvas,
+  extend,
+  useFrame,
+  useLoader,
+  useThree,
+} from "@react-three/fiber";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import "./App.css";
 
-function Loading() {
+extend({ OrbitControls });
+
+const Loading = () => {
   return (
     <mesh visible position={[0, 0, 0]} rotation={[0, 0, 0]}>
       <sphereGeometry attach="geometry" args={[1, 16, 16]} />
@@ -17,15 +26,11 @@ function Loading() {
       />
     </mesh>
   );
-}
+};
 
 const ArWing = () => {
   const group = useRef();
   const { nodes } = useLoader(GLTFLoader, "models/arwing.glb");
-
-  useFrame(() => {
-    group.current.rotation.y += 0.004;
-  });
 
   return (
     <group ref={group}>
@@ -41,13 +46,36 @@ const ArWing = () => {
   );
 };
 
+const ControlCamera = () => {
+  const {
+    camera,
+    gl: { domElement },
+  } = useThree();
+  const controls = useRef();
+  useFrame((state) => controls.current.update());
+  return (
+    <orbitControls
+      ref={controls}
+      args={[camera, domElement]}
+      enableZoom={false}
+      maxAzimuthAngle={Math.PI / 4}
+      maxPolarAngle={Math.PI}
+      minAzimuthAngle={-Math.PI / 4}
+      minPolarAngle={0}
+    />
+  );
+};
+
 export default function App() {
   return (
-    <Canvas style={{ background: "#171717" }}>
-      <directionalLight intensity={0.5} />
-      <Suspense fallback={<Loading />}>
-        <ArWing />
-      </Suspense>
-    </Canvas>
+    <>
+      <Canvas style={{ background: "white" }}>
+        <ControlCamera />
+        <directionalLight intensity={0.5} />
+        <Suspense fallback={<Loading />}>
+          <ArWing />
+        </Suspense>
+      </Canvas>
+    </>
   );
 }
